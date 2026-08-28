@@ -37,9 +37,9 @@ export default function DashboardPage() {
             { label: 'Pending Verification', value: DEMO_PROPERTIES.filter(p => p.verification_status === 'AI DETECTED' || p.verification_status === 'UNVERIFIED').length, color: 'text-amber-600' },
             { label: 'Disputes Detected', value: DEMO_ALERTS.length, color: 'text-slate-900' },
           ].map(kpi => (
-            <Card key={kpi.label}>
-              <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-slate-500">{kpi.label}</CardTitle></CardHeader>
-              <CardContent><div className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</div></CardContent>
+            <Card key={kpi.label} className="transition-all hover:-translate-y-1 hover:shadow-lg border-b-4 hover:border-b-primary duration-300">
+              <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">{kpi.label}</CardTitle></CardHeader>
+              <CardContent><div className={`text-4xl font-bold ${kpi.color} tracking-tight`}>{kpi.value}</div></CardContent>
             </Card>
           ))}
         </div>
@@ -59,7 +59,7 @@ export default function DashboardPage() {
             {DEMO_ALERTS.slice(0, 3).map(alert => {
               const prop = DEMO_PROPERTIES.find(p => p.id === alert.property_id);
               return (
-                <Card key={alert.id} className={!alert.read ? 'border-l-4 border-l-primary' : ''}>
+                <Card key={alert.id} className={`transition-all hover:shadow-md duration-200 cursor-pointer ${!alert.read ? 'border-l-4 border-l-primary bg-indigo-50/30' : ''}`}>
                   <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           </div>
           <div className="grid gap-3">
             {DEMO_PROPERTIES.map(prop => (
-              <Card key={prop.id} className="hover:shadow-md transition-shadow">
+              <Card key={prop.id} className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 border-l-4 border-transparent hover:border-l-primary group">
                 <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                   <div>
                     <Link to={`/properties/${prop.id}`} className="font-semibold text-sm hover:text-primary transition-colors">

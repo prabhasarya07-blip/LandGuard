@@ -31,7 +31,7 @@ export default function PropertiesPage() {
       ) : (
         <div className="grid gap-4">
           {properties.map(property => (
-            <Card key={property.id} className="hover:shadow-md transition-shadow">
+            <Card key={property.id} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 border-l-4 border-transparent hover:border-l-primary cursor-pointer group">
               <CardContent className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">
