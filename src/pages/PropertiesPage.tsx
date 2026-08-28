@@ -1,0 +1,73 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { DEMO_PROPERTIES } from '../mock/demoData';
+import { Plus } from 'lucide-react';
+
+export default function PropertiesPage() {
+  const [properties] = useState(DEMO_PROPERTIES);
+
+  return (
+    <DashboardLayout>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">My Properties</h2>
+          <p className="text-muted-foreground">Manage your monitored properties.</p>
+        </div>
+        <Link to="/properties/add">
+          <Button><Plus className="mr-2 h-4 w-4" /> Add Property</Button>
+        </Link>
+      </div>
+
+      {properties.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center text-slate-400">
+            <p className="text-lg mb-2">No properties monitored yet.</p>
+            <p className="text-sm">Add a property to start monitoring land-dispute signals.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {properties.map(property => (
+            <Card key={property.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {property.property_name || `Survey No: ${property.survey_number}`}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Survey: {property.survey_number} • {property.village}, {property.taluk}, {property.district}, {property.state}
+                  </p>
+                  {property.latest_dispute && (
+                    <p className="text-xs text-slate-400 mt-1">Latest: {property.latest_dispute}</p>
+                  )}
+                  <p className="text-xs text-slate-400 mt-0.5">Added {new Date(property.created_at).toLocaleDateString('en-IN')}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      property.risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive' :
+                      property.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                      property.risk_level === 'LOW' ? 'bg-blue-100 text-blue-700' :
+                      'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {property.risk_status}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1 font-medium">
+                      {property.signals_count} signal(s) • {property.verification_status}
+                    </div>
+                  </div>
+                  <Link to={`/properties/${property.id}`}>
+                    <Button variant="outline" size="sm">View Intelligence</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </DashboardLayout>
+  );
+}

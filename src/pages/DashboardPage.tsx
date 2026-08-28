@@ -1,0 +1,133 @@
+import { useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import { DEMO_PROPERTIES, DEMO_ALERTS } from '../mock/demoData';
+import { ArrowRight, Info } from 'lucide-react';
+
+export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) navigate('/login');
+  }, [user, loading, navigate]);
+
+  if (loading || !user) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading...</div>;
+
+  const highRisk = DEMO_ALERTS.filter(a => a.risk_level === 'HIGH').length;
+  const unread = DEMO_ALERTS.filter(a => !a.read).length;
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">What is happening with my properties?</p>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            { label: 'Monitored Properties', value: DEMO_PROPERTIES.length, color: 'text-slate-900' },
+            { label: 'Active Alerts', value: unread, color: 'text-primary' },
+            { label: 'High-Risk Matches', value: highRisk, color: 'text-destructive' },
+            { label: 'Pending Verification', value: DEMO_PROPERTIES.filter(p => p.verification_status === 'AI DETECTED' || p.verification_status === 'UNVERIFIED').length, color: 'text-amber-600' },
+            { label: 'Disputes Detected', value: DEMO_ALERTS.length, color: 'text-slate-900' },
+          ].map(kpi => (
+            <Card key={kpi.label}>
+              <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-slate-500">{kpi.label}</CardTitle></CardHeader>
+              <CardContent><div className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</div></CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2 text-amber-700 text-sm">
+          <Info className="h-4 w-4 shrink-0 mt-0.5" />
+          LandGuard is an AI-assisted monitoring system. Information may be incomplete or inaccurate. It does not provide legal advice.
+        </div>
+
+        {/* Recent Alerts */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Recent Alerts</h3>
+            <Link to="/alerts"><Button variant="ghost" size="sm">View All <ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
+          </div>
+          <div className="grid gap-3">
+            {DEMO_ALERTS.slice(0, 3).map(alert => {
+              const prop = DEMO_PROPERTIES.find(p => p.id === alert.property_id);
+              return (
+                <Card key={alert.id} className={!alert.read ? 'border-l-4 border-l-primary' : ''}>
+                  <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{alert.dispute_type}</span>
+                        {!alert.read && <span className="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-primary-foreground rounded">NEW</span>}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {prop?.survey_number} — {prop?.village}, {prop?.district}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Source: {alert.source} • {new Date(alert.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                          alert.risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive' :
+                          alert.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>{alert.risk_level}</span>
+                        <div className="text-xs text-slate-500 mt-1">{alert.verification_status}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Property Risk Overview */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Property Risk Overview</h3>
+            <Link to="/properties"><Button variant="ghost" size="sm">View All <ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
+          </div>
+          <div className="grid gap-3">
+            {DEMO_PROPERTIES.map(prop => (
+              <Card key={prop.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div>
+                    <Link to={`/properties/${prop.id}`} className="font-semibold text-sm hover:text-primary transition-colors">
+                      {prop.property_name || `Survey: ${prop.survey_number}`}
+                    </Link>
+                    <div className="text-sm text-muted-foreground">
+                      {prop.survey_number} • {prop.village}, {prop.district}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                        prop.risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive' :
+                        prop.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                        prop.risk_level === 'LOW' ? 'bg-blue-100 text-blue-700' :
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>{prop.risk_status}</div>
+                      <div className="text-xs text-slate-500 mt-1">{prop.signals_count} signal(s)</div>
+                    </div>
+                    <Link to={`/properties/${prop.id}`}>
+                      <Button variant="outline" size="sm">View</Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
