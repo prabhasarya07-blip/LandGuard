@@ -115,12 +115,34 @@ export default function PropertyIntelligencePage() {
               <CardContent className="space-y-3 text-sm">
                 {[['Survey No.', property.survey_number], ['Village', property.village], ['Taluk', property.taluk],
                   ['District', property.district], ['State', property.state], ['Type', property.property_type],
-                  ['Area', property.area], ['Owner', property.owner_name], ['Signals', String(property.signals_count)],
+                  ['Area', property.area], ['Owner', property.owner_name], 
                 ].map(([label, val]) => val && (
                   <div key={label} className="flex justify-between border-b pb-2 last:border-0">
                     <span className="text-slate-500">{label}</span><span className="font-medium text-right">{val}</span>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Monitoring Status</CardTitle></CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-slate-500">Status</span>
+                  <span className="font-medium text-emerald-600">{property.monitoring_status}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-slate-500">Last Scan</span>
+                  <span className="font-medium">Today, 08:30 AM</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-slate-500">Sources Checked</span>
+                  <span className="font-medium">12 Regional Papers</span>
+                </div>
+                <div className="flex justify-between pb-2">
+                  <span className="text-slate-500">New Signals</span>
+                  <span className="font-medium text-destructive">{property.signals_count}</span>
+                </div>
               </CardContent>
             </Card>
           </div>
