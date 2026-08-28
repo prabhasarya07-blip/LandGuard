@@ -1,6 +1,6 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '../components/ui/card';
-import { Bell, Info, ShieldCheck } from 'lucide-react';
+import { Bell, Info } from 'lucide-react';
 import { useAlerts } from '../hooks/useAlerts';
 import { useProperties } from '../hooks/useProperties';
 

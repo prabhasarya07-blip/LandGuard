@@ -20,7 +20,7 @@ export default function DocumentsPage() {
 
   const simulateUpload = (file: File) => {
     setUploading(true);
-    const stages = ['Document received', 'Checking for duplicates...', 'OCR processing...', 'Land-dispute analysis...', 'Property matching...', 'Complete'];
+    const stages = ['Document received', 'Extracting metadata...', 'Analyzing text...', 'Complete'];
     let i = 0;
     const interval = setInterval(() => {
       setUploadStage(stages[i]);
@@ -88,8 +88,8 @@ export default function DocumentsPage() {
                 </div>
               </div>
               <div className="mt-4 space-y-2">
-                {['Document received', 'Checking for duplicates...', 'OCR processing...', 'Land-dispute analysis...', 'Property matching...', 'Complete'].map((stage, i) => {
-                  const stages = ['Document received', 'Checking for duplicates...', 'OCR processing...', 'Land-dispute analysis...', 'Property matching...', 'Complete'];
+                {['Document received', 'Extracting metadata...', 'Analyzing text...', 'Complete'].map((stage, i) => {
+                  const stages = ['Document received', 'Extracting metadata...', 'Analyzing text...', 'Complete'];
                   const currentIdx = stages.indexOf(uploadStage);
                   const done = i < currentIdx;
                   const active = i === currentIdx;

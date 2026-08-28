@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/button';
@@ -42,9 +41,6 @@ export default function PropertiesPage() {
                   <p className="text-sm text-slate-500">
                     Survey: {property.survey_number} • {property.village}, {property.taluk}, {property.district}, {property.state}
                   </p>
-                  {property.latest_dispute && (
-                    <p className="text-xs text-slate-400 mt-1">Latest: {property.latest_dispute}</p>
-                  )}
                   <p className="text-xs text-slate-400 mt-0.5">Added {new Date(property.created_at).toLocaleDateString('en-IN')}</p>
                 </div>
                 <div className="flex items-center gap-4">

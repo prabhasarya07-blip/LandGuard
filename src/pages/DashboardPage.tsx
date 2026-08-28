@@ -7,9 +7,6 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { ArrowRight, Info } from 'lucide-react';
 import { useProperties } from '../hooks/useProperties';
 import { useAlerts } from '../hooks/useAlerts';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useEffect } from 'react';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();

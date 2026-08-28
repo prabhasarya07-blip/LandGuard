@@ -4,15 +4,14 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { DEMO_DISPUTE_IMPACTS, DEMO_AREA_INTELLIGENCE, DEMO_PARTY_INTELLIGENCE } from '../mock/demoData';
-import { ConfidenceScoreWidget, FalsePositivePanel, ImpactAssessment } from '../components/ConfidenceEngine';
+import { ImpactAssessment } from '../components/ConfidenceEngine';
 import { PartyIntelligenceCard } from '../components/PartyIntelligence';
-import { DocumentChat } from '../components/DocumentChat';
-import { Clock, CheckCircle2, Info, ArrowLeft, Shield, Printer, Activity } from 'lucide-react';
+import { Clock, CheckCircle2, Info, ArrowLeft, Shield, Printer, Search } from 'lucide-react';
 import { usePropertyIntelligence } from '../hooks/usePropertyIntelligence';
 
 export default function PropertyIntelligencePage() {
   const { id } = useParams<{ id: string }>();
-  const { property, disputes, loading, error, analyzing, analyzeStatus, analyzeProperty, updateVerification } = usePropertyIntelligence(id);
+  const { property, disputes, loading, error, analysisLoading, loadDemoIntelligence, updateVerification } = usePropertyIntelligence(id);
   const [activeTab, setActiveTab] = useState('overview');
 
   const timeline = disputes.map(d => ({
@@ -25,7 +24,7 @@ export default function PropertyIntelligencePage() {
   })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const areaIntelligence = property ? DEMO_AREA_INTELLIGENCE[property.id] : null;
-  const tabs = ['Overview', 'Disputes', 'AI Document Chat', 'Timeline', 'Sources', 'AI Analysis', 'Verification', 'Area Intelligence', 'Precautions'];
+  const tabs = ['Overview', 'Disputes', 'Timeline', 'Sources', 'Summary', 'Verification', 'Area Intelligence', 'Precautions'];
 
   if (loading || !property) {
     return <DashboardLayout><div className="flex h-screen items-center justify-center">Loading property intelligence...</div></DashboardLayout>;
@@ -69,29 +68,17 @@ export default function PropertyIntelligencePage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={analyzeProperty} disabled={analyzing} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-            <Activity className="w-4 h-4 mr-2" />
-            {analyzing ? 'Analyzing...' : 'Analyze Property'}
-          </Button>
-          <Link to={`/properties/${property.id}/report`}>
-            <Button variant="outline" className="bg-white"><Printer className="w-4 h-4 mr-2" /> Generate Report</Button>
-          </Link>
+          {disputes.length === 0 ? (
+            <Button onClick={loadDemoIntelligence} disabled={analysisLoading} className="bg-primary text-white">
+              {analysisLoading ? <span className="animate-pulse">Loading Demo Data...</span> : <><Search className="w-4 h-4 mr-2" /> Load Demo Intelligence</>}
+            </Button>
+          ) : (
+            <Link to={`/properties/${property.id}/report`}>
+              <Button variant="outline" className="bg-white"><Printer className="w-4 h-4 mr-2" /> Generate Report</Button>
+            </Link>
+          )}
         </div>
       </div>
-      
-      {analyzeStatus.length > 0 && (
-        <Card className="mb-6 border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-              {analyzeStatus.map((status, idx) => (
-                <div key={idx} className={idx === analyzeStatus.length - 1 ? "text-primary font-bold animate-pulse" : ""}>
-                  {status}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 flex gap-2 text-amber-800 text-sm">
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
@@ -114,7 +101,7 @@ export default function PropertyIntelligencePage() {
           <div className="md:col-span-2 space-y-6">
             {signalsCount > 0 ? (
               <Card>
-                <CardHeader><CardTitle>AI Risk Analysis</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Risk Analysis</CardTitle></CardHeader>
                 <CardContent className="space-y-4 text-sm text-slate-700">
                   <p>LandGuard has identified <strong>{signalsCount} signal(s)</strong> across monitored sources indicating potential {disputes[0]?.dispute_type || 'dispute'} activity associated with Survey Number {property.survey_number} in {property.village}, {property.district}.</p>
                   {disputes[0] && disputes[0].match_explanation && (
@@ -212,6 +199,7 @@ export default function PropertyIntelligencePage() {
             </Card>
           </div>
         </div>
+        </div>
       )}
 
       {/* DISPUTES TAB */}
@@ -256,13 +244,6 @@ export default function PropertyIntelligencePage() {
         </div>
       )}
 
-      {/* AI DOCUMENT CHAT TAB */}
-      {activeTab === 'ai document chat' && (
-        <div className="max-w-4xl mx-auto">
-          <DocumentChat propertyId={property.id} />
-        </div>
-      )}
-
       {/* SOURCES TAB */}
       {activeTab === 'sources' && (
         <Card>
@@ -273,8 +254,8 @@ export default function PropertyIntelligencePage() {
           <CardContent>
             <div className="bg-slate-50 border rounded-lg p-6 text-center text-slate-500">
               <h3 className="font-semibold text-slate-700 mb-2">Demo Mode Active</h3>
-              <p className="text-sm mb-4">Live scraping of 50+ regional newspapers is disabled in this demo environment.</p>
-              <p className="text-sm">The OCR and AI extraction pipeline processed a <strong>generated DEMO document</strong> containing matching identifiers to demonstrate the engine's capabilities.</p>
+              <p className="text-sm mb-4">Live scraping of regional newspapers is disabled in this demo environment.</p>
+              <p className="text-sm">The intelligence pipeline is currently using a <strong>seeded DEMO document</strong> containing matching identifiers to demonstrate the engine's capabilities.</p>
             </div>
           </CardContent>
         </Card>
@@ -312,8 +293,8 @@ export default function PropertyIntelligencePage() {
         </Card>
       )}
 
-      {/* AI ANALYSIS TAB */}
-      {activeTab === 'ai analysis' && (
+      {/* SUMMARY TAB */}
+      {activeTab === 'summary' && (
         <div className="space-y-6">
           {property.signals_count > 0 ? (
             <>
@@ -338,7 +319,7 @@ export default function PropertyIntelligencePage() {
               </Card>
             </>
           ) : (
-            <Card><CardContent className="p-12 text-center text-slate-400">No AI analysis available — no dispute signals detected.</CardContent></Card>
+            <Card><CardContent className="p-12 text-center text-slate-400">No summary available — no dispute signals detected.</CardContent></Card>
           )}
         </div>
       )}

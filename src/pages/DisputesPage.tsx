@@ -2,14 +2,13 @@ import { useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Shield, Filter, Search, Download } from 'lucide-react';
+import { Shield, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { DISPUTE_TYPES, INDIAN_STATES } from '../mock/demoData';
+import { DISPUTE_TYPES } from '../mock/demoData';
 import { useDisputes } from '../hooks/useDisputes';
 import { useProperties } from '../hooks/useProperties';
 
 export default function DisputesPage() {
-  const [filterState, setFilterState] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterRisk, setFilterRisk] = useState('');
   
@@ -17,7 +16,6 @@ export default function DisputesPage() {
   const { properties } = useProperties();
 
   const filtered = disputes.filter(d => {
-    if (filterState && d.state !== filterState) return false;
     if (filterType && d.dispute_type !== filterType) return false;
     if (filterRisk && d.risk_level !== filterRisk) return false;
     return true;
@@ -38,11 +36,7 @@ export default function DisputesPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3 flex-wrap">
               <Filter className="h-4 w-4 text-slate-400" />
-              <select value={filterState} onChange={(e) => setFilterState(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm">
-                <option value="">All States</option>
-                {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+
               <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
                 className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                 <option value="">All Types</option>
@@ -53,8 +47,8 @@ export default function DisputesPage() {
                 <option value="">All Risk Levels</option>
                 {['HIGH', 'MEDIUM', 'LOW'].map(r => <option key={r} value={r}>{r}</option>)}
               </select>
-              {(filterState || filterType || filterRisk) && (
-                <Button variant="ghost" size="sm" onClick={() => { setFilterState(''); setFilterType(''); setFilterRisk(''); }}>
+              {(filterType || filterRisk) && (
+                <Button variant="ghost" size="sm" onClick={() => { setFilterType(''); setFilterRisk(''); }}>
                   Clear
                 </Button>
               )}

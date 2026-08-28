@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface Dispute {
   id: string;
@@ -13,20 +14,34 @@ export interface Dispute {
   extracted_text: string;
   dispute_type: string;
   parties: string[];
+  court?: string;
+  case_number?: string;
   risk_level: string;
   match_explanation: Record<string, string>;
   verification_status: string;
+  cluster_id: string | null;
+}
+
+export interface VerificationEvent {
+  id: string;
+  dispute_id: string;
+  previous_status: string;
+  new_status: string;
+  reason: string;
+  timestamp: string;
+  actor: string;
 }
 
 export function usePropertyIntelligence(propertyId: string | undefined) {
+  const { user } = useAuth();
   const [property, setProperty] = useState<any>(null);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [verifications, setVerifications] = useState<VerificationEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeStatus, setAnalyzeStatus] = useState<string[]>([]);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
 
-  const fetchAll = useCallback(async () => {
+  const fetchIntelligence = useCallback(async () => {
     if (!propertyId) return;
     try {
       setLoading(true);
@@ -36,20 +51,22 @@ export function usePropertyIntelligence(propertyId: string | undefined) {
         .select('*')
         .eq('id', propertyId)
         .single();
-        
       if (propError) throw propError;
       setProperty(propData);
 
-      const { data: disputesData, error: disputesError } = await supabase
+      const { data: disputesData, error: dispError } = await supabase
         .from('disputes')
         .select('*')
         .eq('property_id', propertyId)
-        .order('created_at', { ascending: false });
-
-      if (disputesError) throw disputesError;
+        .order('date', { ascending: false });
+      if (dispError) throw dispError;
       setDisputes(disputesData || []);
       
+      // Fetch verifications (placeholder since we don't have a verifications table setup yet)
+      setVerifications([]);
+
     } catch (err: any) {
+      console.error(err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -57,92 +74,73 @@ export function usePropertyIntelligence(propertyId: string | undefined) {
   }, [propertyId]);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    fetchIntelligence();
+  }, [fetchIntelligence]);
+
+  const loadDemoIntelligence = async () => {
+    if (!property || !user) return;
+    try {
+      setAnalysisLoading(true);
+      
+      const { data: dispute, error: disputeError } = await supabase
+        .from('disputes')
+        .insert([{
+          property_id: property.id,
+          title: 'Dispute Notice Detected',
+          source_name: 'Demo Newspaper',
+          source_type: 'Newspaper',
+          source_language: 'English',
+          page_number: 1,
+          date: new Date().toISOString().split('T')[0],
+          extracted_text: `PUBLIC NOTICE: This is to inform the general public that the property bearing Survey Number ${property.survey_number} situated at ${property.village} is subject to an active dispute between the parties...`,
+          dispute_type: 'Ownership Dispute',
+          parties: ['John Doe', 'Jane Doe'],
+          risk_level: 'HIGH',
+          match_explanation: { survey_number: 'Exact match', village: 'Exact match', source: 'Demo newspaper' },
+          verification_status: 'AI DETECTED',
+          cluster_id: null
+        }])
+        .select()
+        .single();
+        
+      if (disputeError) throw disputeError;
+
+      await supabase.from('properties').update({ monitoring_status: 'ACTIVE' }).eq('id', property.id);
+
+      await supabase.from('alerts').insert([{
+        user_id: user.id,
+        property_id: property.id,
+        dispute_id: dispute.id,
+        dispute_type: dispute.dispute_type,
+        risk_level: 'HIGH',
+        date: dispute.date,
+        source: dispute.source_name,
+        source_page: dispute.page_number,
+        verification_status: 'AI DETECTED',
+        read: false
+      }]);
+
+      await fetchIntelligence();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
 
   const updateVerification = async (disputeId: string, newStatus: string) => {
-    // In a real app, you would log an audit event here as requested.
-    const { error } = await supabase
-      .from('disputes')
-      .update({ verification_status: newStatus })
-      .eq('id', disputeId);
-      
-    if (error) {
-      alert("Failed to update verification status: " + error.message);
-      return;
-    }
-    await fetchAll();
-  };
-
-  const analyzeProperty = async () => {
-    if (!propertyId) return;
-    setAnalyzing(true);
-    setAnalyzeStatus(['Locating demo newspaper source...']);
-    
     try {
-      // Fake a 1 second delay for source finding
-      await new Promise(r => setTimeout(r, 1000));
-      setAnalyzeStatus(prev => [...prev, 'Source found ✓', 'Running OCR extraction...']);
-      
-      // Create a canvas to generate a real image for Tesseract to OCR
-      const canvas = document.createElement('canvas');
-      canvas.width = 800; canvas.height = 400;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, 800, 400);
-        ctx.fillStyle = 'black';
-        ctx.font = '24px serif';
-        ctx.fillText('PUBLIC NOTICE - LEGAL DISPUTE', 50, 50);
-        ctx.font = '18px serif';
-        ctx.fillText(`This is to inform the general public that there is an ownership dispute`, 50, 100);
-        ctx.fillText(`regarding the property located at Survey Number ${property?.survey_number || '145/2'} in ${property?.village || 'Whitefield'}`, 50, 130);
-        ctx.fillText(`district ${property?.district || 'Bengaluru'}. A court case has been filed by the claimant.`, 50, 160);
-      }
-      const dataUrl = canvas.toDataURL('image/png');
-
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          propertyId, 
-          imageUrl: dataUrl 
-        })
-      });
-
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to analyze property');
-      }
-
-      setAnalyzeStatus(prev => [...prev, 'OCR completed ✓', 'Land-dispute analysis completed ✓', 'Property matching completed ✓', 'Risk assessment completed ✓', result.message]);
-      
-      // Give the user time to read the status
-      setTimeout(() => {
-        setAnalyzing(false);
-        setAnalyzeStatus([]);
-        fetchAll(); // Refresh data
-      }, 2000);
-
-    } catch (err: any) {
-      setAnalyzeStatus(prev => [...prev, 'Error: ' + err.message]);
-      setTimeout(() => {
-        setAnalyzing(false);
-        setAnalyzeStatus([]);
-      }, 3000);
+      const { error } = await supabase
+        .from('disputes')
+        .update({ verification_status: newStatus })
+        .eq('id', disputeId);
+      if (error) throw error;
+      await fetchIntelligence();
+    } catch (error: any) {
+      alert("Failed to update verification status: " + error.message);
     }
   };
 
-  return {
-    property,
-    disputes,
-    loading,
-    error,
-    analyzing,
-    analyzeStatus,
-    analyzeProperty,
-    updateVerification,
-    refresh: fetchAll
-  };
+  return { property, disputes, verifications, loading, error, analysisLoading, loadDemoIntelligence, updateVerification, refresh: fetchIntelligence };
 }

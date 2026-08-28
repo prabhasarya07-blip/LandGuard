@@ -81,8 +81,8 @@ export default function LandingPage() {
           <h3 className="text-3xl font-bold text-center mb-12">Key Capabilities</h3>
           <div className="grid md:grid-cols-2 gap-6">
             {[
-              ['Automated OCR Extraction', 'Extracts land-dispute notices from regional newspapers using OCR across English, Kannada, and Hindi.'],
-              ['AI Classification & Matching', 'Uses Gemini AI to classify notices, extract structured data, and match disputes to your monitored properties.'],
+              ['Document Ingestion', 'Process and structure land-dispute notices from regional sources into unified data.'],
+              ['Intelligence & Matching', 'Uses advanced pattern recognition to classify notices and extract structured data.'],
               ['Dispute Clustering & History', 'Groups related newspaper reports into unified dispute clusters with full chronological timelines.'],
               ['Source Provenance & Evidence', 'Every finding links back to the original document, page, and extracted text — full audit trail.'],
               ['Explainable Risk Signals', 'Risk levels with transparent explanations — no opaque scores. See exactly why a property was flagged.'],
