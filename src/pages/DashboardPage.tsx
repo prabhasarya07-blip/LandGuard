@@ -7,6 +7,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { ArrowRight, Info } from 'lucide-react';
 import { useProperties } from '../hooks/useProperties';
 import { useAlerts } from '../hooks/useAlerts';
+import { DashboardVisuals } from '../components/DashboardVisuals';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -51,6 +52,8 @@ export default function DashboardPage() {
           <Info className="h-4 w-4 shrink-0 mt-0.5" />
           LandGuard is an AI-assisted monitoring system. Information may be incomplete or inaccurate. It does not provide legal advice.
         </div>
+
+        <DashboardVisuals />
 
         {/* Recent Alerts */}
         <div>
