@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { DEMO_PROPERTIES, DEMO_DISPUTES, DEMO_VERIFICATION_EVENTS } from '../mock/demoData';
 
 export interface Dispute {
   id: string;
@@ -46,24 +47,40 @@ export function usePropertyIntelligence(propertyId: string | undefined) {
     try {
       setLoading(true);
       
-      const { data: propData, error: propError } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('id', propertyId)
-        .single();
-      if (propError) throw propError;
-      setProperty(propData);
+      if (propertyId.startsWith('prop-')) {
+        // PRESENTATION MOCK DATA
+        const mockProp = DEMO_PROPERTIES.find(p => p.id === propertyId);
+        setProperty(mockProp);
+      } else {
+        const { data: propData, error: propError } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('id', propertyId)
+          .single();
+        if (propError) throw propError;
+        setProperty(propData);
+      }
 
-      const { data: disputesData, error: dispError } = await supabase
-        .from('disputes')
-        .select('*')
-        .eq('property_id', propertyId)
-        .order('date', { ascending: false });
-      if (dispError) throw dispError;
-      setDisputes(disputesData || []);
+      if (propertyId.startsWith('prop-')) {
+        const mockDisputes = DEMO_DISPUTES.filter(d => d.property_id === propertyId);
+        setDisputes(mockDisputes as any);
+      } else {
+        const { data: disputesData, error: dispError } = await supabase
+          .from('disputes')
+          .select('*')
+          .eq('property_id', propertyId)
+          .order('date', { ascending: false });
+        if (dispError) throw dispError;
+        setDisputes(disputesData || []);
+      }
       
-      // Fetch verifications (placeholder since we don't have a verifications table setup yet)
-      setVerifications([]);
+      // Fetch verifications
+      if (propertyId.startsWith('prop-')) {
+        const mockDisputeIds = DEMO_DISPUTES.filter(d => d.property_id === propertyId).map(d => d.id);
+        setVerifications(DEMO_VERIFICATION_EVENTS.filter(v => mockDisputeIds.includes(v.dispute_id)));
+      } else {
+        setVerifications([]);
+      }
 
     } catch (err: any) {
       console.error(err);

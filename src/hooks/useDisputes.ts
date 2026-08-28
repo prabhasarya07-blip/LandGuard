@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { DEMO_DISPUTES } from '../mock/demoData';
 import { Dispute } from './usePropertyIntelligence';
 import { useProperties } from './useProperties';
 
@@ -27,7 +28,12 @@ export function useDisputes() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setDisputes(data || []);
+      
+      if (!data || data.length === 0) {
+        setDisputes(DEMO_DISPUTES as any[]);
+      } else {
+        setDisputes(data);
+      }
     } catch (err: any) {
       console.error(err);
     } finally {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { DEMO_ALERTS } from '../mock/demoData';
 import { useProperties } from './useProperties';
 
 export interface Alert {
@@ -40,7 +41,12 @@ export function useAlerts() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAlerts(data || []);
+      
+      if (!data || data.length === 0) {
+        setAlerts(DEMO_ALERTS as any[]);
+      } else {
+        setAlerts(data);
+      }
     } catch (err: any) {
       console.error(err);
     } finally {

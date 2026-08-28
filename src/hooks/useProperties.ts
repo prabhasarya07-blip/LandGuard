@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { DEMO_PROPERTIES } from '../mock/demoData';
 
 export interface Property {
   id: string;
@@ -38,7 +39,13 @@ export function useProperties() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProperties(data || []);
+      
+      // INJECT DEMO DATA IF DB IS EMPTY FOR PRESENTATION
+      if (!data || data.length === 0) {
+        setProperties(DEMO_PROPERTIES as any[]);
+      } else {
+        setProperties(data);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
