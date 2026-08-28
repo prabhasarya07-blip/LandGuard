@@ -1,6 +1,8 @@
 # 🏞️ LandGuard
 
-**LandGuard** is a modern web application built with React, TypeScript, and Vite for land management and conservation. It provides a comprehensive platform for tracking, managing, and protecting land resources with real-time updates and Supabase integration.
+**LandGuard** is a modern web application built with React, TypeScript, and Vite for land management and conservation. It provides a comprehensive platform for tracking, managing, and protecting la[...]
+
+**Live Demo:** [https://landguard-one.vercel.app](https://landguard-one.vercel.app) — Hosted on Vercel
 
 ## 🚀 Features
 
