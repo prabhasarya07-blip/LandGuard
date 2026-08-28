@@ -25,7 +25,7 @@ export interface Property {
 
 export function useProperties() {
   const { user } = useAuth();
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Property[]>(DEMO_PROPERTIES as any[]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

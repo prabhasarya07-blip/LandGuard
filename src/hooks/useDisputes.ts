@@ -8,7 +8,7 @@ import { useProperties } from './useProperties';
 export function useDisputes() {
   const { user } = useAuth();
   const { properties } = useProperties();
-  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [disputes, setDisputes] = useState<Dispute[]>(DEMO_DISPUTES as any[]);
   const [loading, setLoading] = useState(true);
 
   const fetchDisputes = useCallback(async () => {

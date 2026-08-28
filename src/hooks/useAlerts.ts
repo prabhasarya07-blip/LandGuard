@@ -21,7 +21,7 @@ export interface Alert {
 export function useAlerts() {
   const { user } = useAuth();
   const { properties } = useProperties();
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>(DEMO_ALERTS as any[]);
   const [loading, setLoading] = useState(true);
 
   const fetchAlerts = useCallback(async () => {
