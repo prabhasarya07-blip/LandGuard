@@ -12,7 +12,7 @@ export default function AddPropertyPage() {
   const navigate = useNavigate();
   const { addProperty } = useProperties();
   const [form, setForm] = useState({
-    state: '', district: '', taluk: '', village: '', survey_number: '',
+    state: 'Karnataka', district: 'Bengaluru Urban', taluk: 'Bengaluru East', village: 'Whitefield', survey_number: '145/2',
     khasra_number: '', property_name: '', owner_name: '', area: '',
     property_type: '', notes: '',
   });
@@ -89,7 +89,7 @@ export default function AddPropertyPage() {
                       <select value={form.district} onChange={(e) => handleChange('district', e.target.value)} required
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                         <option value="">Select district</option>
-                        {(DISTRICTS[form.state] || []).map(d => <option key={d} value={d}>{d}</option>)}
+                        {(DISTRICTS[form.state] || ['Bengaluru Urban', 'Bengaluru Rural']).map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
                   </div>

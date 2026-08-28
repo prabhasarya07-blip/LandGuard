@@ -58,6 +58,11 @@ CREATE TABLE disputes (
   case_number TEXT,
   extracted_text TEXT,
   page_number INTEGER,
+  risk_level TEXT,
+  match_explanation JSONB,
+  source_name TEXT,
+  source_type TEXT,
+  source_language TEXT,
   verification_status TEXT DEFAULT 'AI DETECTED',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -87,8 +92,12 @@ CREATE TABLE alerts (
   property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
   dispute_id UUID REFERENCES disputes(id) ON DELETE CASCADE,
   risk_level TEXT NOT NULL,
-  summary TEXT NOT NULL,
+  summary TEXT,
+  source TEXT,
+  source_page INTEGER,
+  verification_status TEXT,
   is_read BOOLEAN DEFAULT FALSE,
+  read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -1,14 +1,16 @@
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { DEMO_PROPERTIES, DEMO_DISPUTES, DEMO_CONFIDENCE_SCORES, DEMO_FALSE_POSITIVE_INDICATORS, DEMO_DISPUTE_IMPACTS } from '../mock/demoData';
+import { DEMO_CONFIDENCE_SCORES, DEMO_FALSE_POSITIVE_INDICATORS, DEMO_DISPUTE_IMPACTS } from '../mock/demoData';
 import { Printer, ArrowLeft, Shield, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { usePropertyIntelligence } from '../hooks/usePropertyIntelligence';
 
 export default function RiskReportPage() {
   const { id } = useParams<{ id: string }>();
-  const property = DEMO_PROPERTIES.find(p => p.id === id) || DEMO_PROPERTIES[0];
-  const disputes = DEMO_DISPUTES.filter(d => d.property_id === property.id);
-  const confidenceScores = DEMO_CONFIDENCE_SCORES[property.id];
-  const falsePositiveIndicators = DEMO_FALSE_POSITIVE_INDICATORS[property.id];
+  const { property, disputes, loading } = usePropertyIntelligence(id);
+  const confidenceScores = property ? DEMO_CONFIDENCE_SCORES[property.id] : null;
+  const falsePositiveIndicators = property ? DEMO_FALSE_POSITIVE_INDICATORS[property.id] : null;
+
+  if (loading || !property) return <div className="p-8 text-center">Loading Report...</div>;
 
   return (
     <div className="min-h-screen bg-slate-100 p-8">
@@ -116,6 +118,24 @@ export default function RiskReportPage() {
                       <div className="mb-4">
                         <p className="text-sm text-slate-500 font-bold mb-1 uppercase">Extracted Text ({d.source_name})</p>
                         <p className="text-sm italic text-slate-700 p-4 bg-slate-50 border rounded">"{d.extracted_text}"</p>
+                      </div>
+                      <div className="flex justify-between items-center border-b pb-3 border-slate-200">
+                        <div>
+                          <h4 className="font-semibold text-slate-800">Source verification</h4>
+                          <p className="text-sm text-slate-500">Current status: {disputes[0]?.verification_status || 'N/A'}</p>
+                        </div>
+                        <div className={`px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700`}>
+                          ATTENTION
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center pt-1">
+                        <div>
+                          <h4 className="font-semibold text-slate-800">Official verification</h4>
+                          <p className="text-sm text-slate-500">Not yet verified against official government land records</p>
+                        </div>
+                        <div className={`px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600`}>
+                          UNKNOWN
+                        </div>
                       </div>
                       
                       {impact && (

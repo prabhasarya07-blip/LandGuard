@@ -263,6 +263,23 @@ export default function PropertyIntelligencePage() {
         </div>
       )}
 
+      {/* SOURCES TAB */}
+      {activeTab === 'sources' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sources Checked</CardTitle>
+            <CardDescription>Documents and records scanned for this property.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-slate-50 border rounded-lg p-6 text-center text-slate-500">
+              <h3 className="font-semibold text-slate-700 mb-2">Demo Mode Active</h3>
+              <p className="text-sm mb-4">Live scraping of 50+ regional newspapers is disabled in this demo environment.</p>
+              <p className="text-sm">The OCR and AI extraction pipeline processed a <strong>generated DEMO document</strong> containing matching identifiers to demonstrate the engine's capabilities.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* TIMELINE TAB */}
       {activeTab === 'timeline' && (
         <Card>
@@ -293,29 +310,6 @@ export default function PropertyIntelligencePage() {
             )}
           </CardContent>
         </Card>
-      )}
-
-      {/* SOURCES TAB */}
-      {activeTab === 'sources' && (
-        <div className="space-y-4">
-          {disputes.map(d => (
-            <Card key={d.id}>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="font-semibold">{d.source_name}</h4>
-                    <p className="text-sm text-muted-foreground">{d.source_language} • {d.source_type} • Page {d.page_number}</p>
-                  </div>
-                  <span className="text-xs font-medium text-slate-500">{d.verification_status}</span>
-                </div>
-                <div className="bg-slate-900 text-slate-200 p-4 rounded-lg text-sm font-mono leading-relaxed">
-                  {d.extracted_text}
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">Extracted on {d.date} • Navigate to original document to verify.</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       )}
 
       {/* AI ANALYSIS TAB */}
@@ -351,46 +345,39 @@ export default function PropertyIntelligencePage() {
 
       {/* VERIFICATION TAB */}
       {activeTab === 'verification' && (
-        <div className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
           <Card>
-            <CardHeader><CardTitle>Verification Ladder</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Verification Workflow</CardTitle>
+              <CardDescription>Update the verification status of detected signals.</CardDescription>
+            </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {['UNVERIFIED', 'AI DETECTED', 'SOURCE VERIFIED', 'OFFICIAL RECORD VERIFIED', 'CONFIRMED'].map((step, i) => {
-                  const levels = ['UNVERIFIED', 'AI DETECTED', 'SOURCE VERIFIED', 'OFFICIAL RECORD VERIFIED', 'CONFIRMED'];
-                  const currentIdx = levels.indexOf(property.verification_status);
-                  const done = i <= currentIdx;
-                  return (
-                    <div key={step} className={`flex items-center gap-3 p-3 rounded-lg ${done ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50 border border-slate-200'}`}>
-                      {done ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-300" />}
-                      <span className={`text-sm font-medium ${done ? 'text-emerald-700' : 'text-slate-400'}`}>{step}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              {latestDispute ? (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-4 border rounded-lg">
+                    <h4 className="font-semibold text-sm mb-1">Current Status</h4>
+                    <p className="text-lg font-bold text-primary">{latestDispute.verification_status}</p>
+                  </div>
+                  <div className="space-y-3 pt-2">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => updateVerification(latestDispute.id, 'SOURCE VERIFIED')}>
+                      Mark as Source Verified
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={() => updateVerification(latestDispute.id, 'OFFICIAL RECORD VERIFIED')}>
+                      Mark as Official Record Verified
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start border-emerald-200 hover:bg-emerald-50 text-emerald-700" onClick={() => updateVerification(latestDispute.id, 'CONFIRMED')}>
+                      Mark as Confirmed (Active Risk)
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start border-destructive/20 hover:bg-destructive/10 text-destructive" onClick={() => updateVerification(latestDispute.id, 'REJECTED')}>
+                      Mark as Rejected (False Positive)
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-slate-500">No signals to verify.</p>
+              )}
             </CardContent>
           </Card>
-          {verifications.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle>Audit Trail</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                {verifications.map(v => (
-                  <div key={v.id} className="border-l-2 border-primary pl-4 py-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium">{v.previous_status} → {v.new_status}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{v.reason}</p>
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground shrink-0">
-                        <div>{v.actor}</div>
-                        <div>{new Date(v.timestamp).toLocaleString('en-IN')}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
         </div>
       )}
 
