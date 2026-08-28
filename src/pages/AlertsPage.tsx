@@ -1,9 +1,12 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Card, CardContent } from '../components/ui/card';
-import { DEMO_ALERTS, DEMO_PROPERTIES, DEMO_CONFIDENCE_SCORES } from '../mock/demoData';
 import { Bell, Info, ShieldCheck } from 'lucide-react';
+import { useAlerts } from '../hooks/useAlerts';
+import { useProperties } from '../hooks/useProperties';
 
 export default function AlertsPage() {
+  const { alerts, loading, markRead } = useAlerts();
+  const { properties } = useProperties();
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -16,11 +19,14 @@ export default function AlertsPage() {
           Alerts are generated when a dispute signal is matched to one of your monitored properties. LandGuard does not provide legal advice.
         </div>
         <div className="grid gap-4">
-          {DEMO_ALERTS.map(alert => {
-            const prop = DEMO_PROPERTIES.find(p => p.id === alert.property_id);
-            const conf = DEMO_CONFIDENCE_SCORES[alert.property_id];
+          {loading ? (
+             <div className="text-center text-slate-500 py-8">Loading alerts...</div>
+          ) : alerts.length === 0 ? (
+             <div className="text-center text-slate-500 py-8">No alerts found.</div>
+          ) : alerts.map(alert => {
+            const prop = properties.find(p => p.id === alert.property_id);
             return (
-              <Card key={alert.id} className={`${!alert.read ? 'border-l-4 border-l-primary' : ''}`}>
+              <Card key={alert.id} className={`${!alert.read ? 'border-l-4 border-l-primary cursor-pointer' : ''}`} onClick={() => !alert.read && markRead(alert.id)}>
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row justify-between gap-4">
                     <div className="flex gap-4">
@@ -41,7 +47,7 @@ export default function AlertsPage() {
                         <div className="text-sm text-muted-foreground">
                           {prop?.survey_number} — {prop?.village}, {prop?.district}, {prop?.state}
                         </div>
-                        <p className="text-sm text-slate-600 mt-2">{alert.summary}</p>
+                        <p className="text-sm text-slate-600 mt-2">New {alert.dispute_type.toLowerCase()} notice detected matching property identifiers.</p>
                         <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
                           <span>Source: {alert.source} (p.{alert.source_page})</span>
                           <span>{new Date(alert.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
@@ -55,11 +61,7 @@ export default function AlertsPage() {
                         'bg-slate-100 text-slate-600'
                       }`}>{alert.risk_level} RISK</span>
                       <span className="text-xs font-medium text-slate-500">{alert.verification_status}</span>
-                      {conf && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
-                          <ShieldCheck className="w-3 h-3" /> CONFIDENCE: {conf.overall}%
-                        </span>
-                      )}
+                      <span className="text-xs font-medium text-slate-500">{alert.verification_status}</span>
                     </div>
                   </div>
                 </CardContent>

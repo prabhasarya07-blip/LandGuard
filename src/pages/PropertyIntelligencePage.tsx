@@ -3,24 +3,48 @@ import { useParams, Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { DEMO_PROPERTIES, DEMO_DISPUTES, DEMO_TIMELINE, DEMO_VERIFICATION_EVENTS, DEMO_CONFIDENCE_SCORES, DEMO_FALSE_POSITIVE_INDICATORS, DEMO_DISPUTE_IMPACTS, DEMO_AREA_INTELLIGENCE, DEMO_PARTY_INTELLIGENCE } from '../mock/demoData';
+import { DEMO_DISPUTE_IMPACTS, DEMO_AREA_INTELLIGENCE, DEMO_PARTY_INTELLIGENCE } from '../mock/demoData';
 import { ConfidenceScoreWidget, FalsePositivePanel, ImpactAssessment } from '../components/ConfidenceEngine';
 import { PartyIntelligenceCard } from '../components/PartyIntelligence';
 import { DocumentChat } from '../components/DocumentChat';
-import { Clock, CheckCircle2, Info, ArrowLeft, Shield, Printer } from 'lucide-react';
+import { Clock, CheckCircle2, Info, ArrowLeft, Shield, Printer, Activity } from 'lucide-react';
+import { usePropertyIntelligence } from '../hooks/usePropertyIntelligence';
 
 export default function PropertyIntelligencePage() {
   const { id } = useParams<{ id: string }>();
-  const property = DEMO_PROPERTIES.find(p => p.id === id) || DEMO_PROPERTIES[0];
-  const disputes = DEMO_DISPUTES.filter(d => d.property_id === property.id);
-  const timeline = DEMO_TIMELINE[property.id] || [];
-  const verifications = DEMO_VERIFICATION_EVENTS.filter(v => disputes.some(d => d.id === v.dispute_id));
-  const confidenceScores = DEMO_CONFIDENCE_SCORES[property.id];
-  const falsePositiveIndicators = DEMO_FALSE_POSITIVE_INDICATORS[property.id];
+  const { property, disputes, loading, error, analyzing, analyzeStatus, analyzeProperty, updateVerification } = usePropertyIntelligence(id);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const areaIntelligence = DEMO_AREA_INTELLIGENCE[property.id];
+  const timeline = disputes.map(d => ({
+    year: d.date.split('-')[0],
+    date: d.date,
+    event: d.title,
+    source: d.source_name,
+    dispute_type: d.dispute_type,
+    verification_status: d.verification_status
+  })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const areaIntelligence = property ? DEMO_AREA_INTELLIGENCE[property.id] : null;
   const tabs = ['Overview', 'Disputes', 'AI Document Chat', 'Timeline', 'Sources', 'AI Analysis', 'Verification', 'Area Intelligence', 'Precautions'];
+
+  if (loading || !property) {
+    return <DashboardLayout><div className="flex h-screen items-center justify-center">Loading property intelligence...</div></DashboardLayout>;
+  }
+  
+  if (error) {
+    return <DashboardLayout><div className="flex h-screen items-center justify-center text-red-500">{error}</div></DashboardLayout>;
+  }
+
+  // Calculate dynamic properties
+  const signalsCount = disputes.length;
+  const latestDispute = disputes.length > 0 ? disputes[0] : null;
+  const risk_level = latestDispute ? latestDispute.risk_level : 'NONE';
+  const risk_status = risk_level === 'HIGH' ? 'High-priority potential dispute signal detected — verification recommended.' : 
+                      risk_level === 'MEDIUM' ? 'Potential dispute signal detected — verification recommended.' :
+                      risk_level === 'LOW' ? 'Low-confidence signal detected. Identifiers are an approximate match; manual review is suggested.' :
+                      'No relevant dispute signals have been detected in currently monitored sources.';
+  
+  const verification_status = latestDispute ? latestDispute.verification_status : 'N/A';
 
   return (
     <DashboardLayout>
@@ -33,23 +57,41 @@ export default function PropertyIntelligencePage() {
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-2xl font-bold tracking-tight">{property.property_name || `Survey No: ${property.survey_number}`}</h2>
             <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
-              property.risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive border-destructive/20' :
-              property.risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-              property.risk_level === 'LOW' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+              risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+              risk_level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+              risk_level === 'LOW' ? 'bg-blue-50 text-blue-700 border-blue-200' :
               'bg-emerald-50 text-emerald-700 border-emerald-200'
-            }`}>{property.risk_status}</span>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{property.verification_status}</span>
+            }`}>{risk_level !== 'NONE' ? risk_level + ' RISK' : 'NO SIGNALS'}</span>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{verification_status}</span>
           </div>
           <p className="text-muted-foreground mt-1">
             Survey: {property.survey_number} {property.khasra_number ? `• Khasra: ${property.khasra_number}` : ''} • {property.village}, {property.taluk}, {property.district}, {property.state}
           </p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={analyzeProperty} disabled={analyzing} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
+            <Activity className="w-4 h-4 mr-2" />
+            {analyzing ? 'Analyzing...' : 'Analyze Property'}
+          </Button>
           <Link to={`/properties/${property.id}/report`}>
             <Button variant="outline" className="bg-white"><Printer className="w-4 h-4 mr-2" /> Generate Report</Button>
           </Link>
         </div>
       </div>
+      
+      {analyzeStatus.length > 0 && (
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+              {analyzeStatus.map((status, idx) => (
+                <div key={idx} className={idx === analyzeStatus.length - 1 ? "text-primary font-bold animate-pulse" : ""}>
+                  {status}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 flex gap-2 text-amber-800 text-sm">
         <Info className="h-4 w-4 shrink-0 mt-0.5" />
@@ -68,22 +110,20 @@ export default function PropertyIntelligencePage() {
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {confidenceScores && <ConfidenceScoreWidget scores={confidenceScores} />}
-          
           <div className="grid gap-6 md:grid-cols-3">
           <div className="md:col-span-2 space-y-6">
-            {property.signals_count > 0 ? (
+            {signalsCount > 0 ? (
               <Card>
                 <CardHeader><CardTitle>AI Risk Analysis</CardTitle></CardHeader>
                 <CardContent className="space-y-4 text-sm text-slate-700">
-                  <p>LandGuard has identified <strong>{property.signals_count} signal(s)</strong> across monitored sources indicating potential {disputes[0]?.dispute_type || 'dispute'} activity associated with Survey Number {property.survey_number} in {property.village}, {property.district}.</p>
-                  {disputes[0] && (
+                  <p>LandGuard has identified <strong>{signalsCount} signal(s)</strong> across monitored sources indicating potential {disputes[0]?.dispute_type || 'dispute'} activity associated with Survey Number {property.survey_number} in {property.village}, {property.district}.</p>
+                  {disputes[0] && disputes[0].match_explanation && (
                     <div className="bg-slate-50 p-4 rounded-lg border space-y-2">
                       <h4 className="font-semibold text-xs uppercase text-slate-500">Match Explanation</h4>
                       {Object.entries(disputes[0].match_explanation).map(([k, v]) => (
                         <div key={k} className="flex justify-between text-sm">
                           <span className="capitalize text-slate-500">{k.replace('_', ' ')}</span>
-                          <span className="font-medium text-emerald-600">{v}</span>
+                          <span className="font-medium text-emerald-600">{v as string}</span>
                         </div>
                       ))}
                     </div>
@@ -91,10 +131,7 @@ export default function PropertyIntelligencePage() {
                   <div className="bg-slate-50 p-4 rounded-lg border">
                     <h4 className="font-semibold text-xs uppercase text-slate-500 mb-2">Why this risk level?</h4>
                     <p className="text-sm text-slate-600">
-                      {property.risk_level === 'HIGH' ? 'High-priority potential dispute signal detected — verification recommended. Multiple sources reference identifiers matching this property.' :
-                       property.risk_level === 'MEDIUM' ? 'Potential dispute signal detected — verification recommended. A notice with matching identifiers requires review.' :
-                       property.risk_level === 'LOW' ? 'Low-confidence signal detected. Identifiers are an approximate match; manual review is suggested.' :
-                       'No relevant dispute signals have been detected in currently monitored sources.'}
+                      {risk_status}
                     </p>
                   </div>
                 </CardContent>
@@ -116,10 +153,10 @@ export default function PropertyIntelligencePage() {
                 {[
                   { name: 'Property identity', status: 'PASS', desc: 'Survey number matches known formats' },
                   { name: 'Location consistency', status: 'PASS', desc: 'Village and District correspond correctly' },
-                  { name: 'Dispute signals', status: property.signals_count > 0 ? 'ATTENTION' : 'PASS', desc: property.signals_count > 0 ? `${property.signals_count} potential dispute notices found` : 'No signals found' },
-                  { name: 'Recent notices', status: property.signals_count > 0 ? 'ATTENTION' : 'PASS', desc: 'Checked against last 2 years of publications' },
-                  { name: 'Source verification', status: property.verification_status === 'SOURCE VERIFIED' || property.verification_status === 'CONFIRMED' ? 'PASS' : (property.verification_status === 'UNVERIFIED' ? 'UNKNOWN' : 'ATTENTION'), desc: `Current status: ${property.verification_status}` },
-                  { name: 'Official verification', status: property.verification_status === 'CONFIRMED' ? 'PASS' : 'UNKNOWN', desc: 'Not yet verified against official government land records' }
+                  { name: 'Dispute signals', status: signalsCount > 0 ? 'ATTENTION' : 'PASS', desc: signalsCount > 0 ? `${signalsCount} potential dispute notices found` : 'No signals found' },
+                  { name: 'Recent notices', status: signalsCount > 0 ? 'ATTENTION' : 'PASS', desc: 'Checked against last 2 years of publications' },
+                  { name: 'Source verification', status: verification_status === 'SOURCE VERIFIED' || verification_status === 'CONFIRMED' ? 'PASS' : (verification_status === 'UNVERIFIED' ? 'UNKNOWN' : 'ATTENTION'), desc: `Current status: ${verification_status}` },
+                  { name: 'Official verification', status: verification_status === 'CONFIRMED' ? 'PASS' : 'UNKNOWN', desc: 'Not yet verified against official government land records' }
                 ].map(check => (
                   <div key={check.name} className="flex justify-between items-center border-b pb-3 last:border-0 last:pb-0">
                     <div>
@@ -165,21 +202,15 @@ export default function PropertyIntelligencePage() {
                 </div>
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-slate-500">Sources Checked</span>
-                  <span className="font-medium">12 Regional Papers</span>
+                  <span className="font-medium">1 (Demo Source)</span>
                 </div>
                 <div className="flex justify-between pb-2">
                   <span className="text-slate-500">New Signals</span>
-                  <span className="font-medium text-destructive">{property.signals_count}</span>
+                  <span className="font-medium text-destructive">{signalsCount}</span>
                 </div>
               </CardContent>
             </Card>
           </div>
-          {falsePositiveIndicators && (
-            <div className="md:col-span-3 mt-2">
-              <FalsePositivePanel indicators={falsePositiveIndicators} />
-            </div>
-          )}
-        </div>
         </div>
       )}
 

@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { DEMO_PROPERTIES } from '../mock/demoData';
-import { Plus } from 'lucide-react';
+import { useProperties } from '../hooks/useProperties';
+import { Plus, Trash2 } from 'lucide-react';
 
 export default function PropertiesPage() {
-  const [properties] = useState(DEMO_PROPERTIES);
+  const { properties, loading, deleteProperty } = useProperties();
 
   return (
     <DashboardLayout>
@@ -21,7 +21,9 @@ export default function PropertiesPage() {
         </Link>
       </div>
 
-      {properties.length === 0 ? (
+      {loading ? (
+        <Card><CardContent className="p-12 text-center text-slate-400">Loading properties...</CardContent></Card>
+      ) : properties.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center text-slate-400">
             <p className="text-lg mb-2">No properties monitored yet.</p>
@@ -47,21 +49,18 @@ export default function PropertiesPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      property.risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive' :
-                      property.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
-                      property.risk_level === 'LOW' ? 'bg-blue-100 text-blue-700' :
-                      'bg-emerald-100 text-emerald-700'
-                    }`}>
-                      {property.risk_status}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1 font-medium">
-                      {property.signals_count} signal(s) • {property.verification_status}
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700`}>
+                      {property.monitoring_status || 'ACTIVE'}
                     </div>
                   </div>
-                  <Link to={`/properties/${property.id}`}>
-                    <Button variant="outline" size="sm">View Intelligence</Button>
-                  </Link>
+                  <div className="flex flex-col gap-2">
+                    <Link to={`/properties/${property.id}`}>
+                      <Button variant="outline" size="sm" className="w-full">View Intelligence</Button>
+                    </Link>
+                    <Button variant="ghost" size="sm" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => deleteProperty(property.id)}>
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -4,18 +4,20 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { DEMO_PROPERTIES, DEMO_ALERTS } from '../mock/demoData';
+import { DEMO_ALERTS } from '../mock/demoData';
 import { ArrowRight, Info } from 'lucide-react';
+import { useProperties } from '../hooks/useProperties';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
+  const { properties, loading: propertiesLoading } = useProperties();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
   }, [user, loading, navigate]);
 
-  if (loading || !user) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading...</div>;
+  if (loading || !user || propertiesLoading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading...</div>;
 
   const highRisk = DEMO_ALERTS.filter(a => a.risk_level === 'HIGH').length;
   const unread = DEMO_ALERTS.filter(a => !a.read).length;
@@ -31,10 +33,10 @@ export default function DashboardPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Monitored Properties', value: DEMO_PROPERTIES.length, color: 'text-slate-900' },
+            { label: 'Monitored Properties', value: properties.length, color: 'text-slate-900' },
             { label: 'Active Alerts', value: unread, color: 'text-primary' },
             { label: 'High-Risk Matches', value: highRisk, color: 'text-destructive' },
-            { label: 'Pending Verification', value: DEMO_PROPERTIES.filter(p => p.verification_status === 'AI DETECTED' || p.verification_status === 'UNVERIFIED').length, color: 'text-amber-600' },
+            { label: 'Pending Verification', value: 0, color: 'text-amber-600' },
             { label: 'Disputes Detected', value: DEMO_ALERTS.length, color: 'text-slate-900' },
           ].map(kpi => (
             <Card key={kpi.label} className="transition-all hover:-translate-y-1 hover:shadow-lg border-b-4 hover:border-b-primary duration-300">
@@ -57,7 +59,7 @@ export default function DashboardPage() {
           </div>
           <div className="grid gap-3">
             {DEMO_ALERTS.slice(0, 3).map(alert => {
-              const prop = DEMO_PROPERTIES.find(p => p.id === alert.property_id);
+              const prop = properties.find(p => p.id === alert.property_id);
               return (
                 <Card key={alert.id} className={`transition-all hover:shadow-md duration-200 cursor-pointer ${!alert.read ? 'border-l-4 border-l-primary bg-indigo-50/30' : ''}`}>
                   <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
@@ -97,7 +99,7 @@ export default function DashboardPage() {
             <Link to="/properties"><Button variant="ghost" size="sm">View All <ArrowRight className="ml-1 h-4 w-4" /></Button></Link>
           </div>
           <div className="grid gap-3">
-            {DEMO_PROPERTIES.map(prop => (
+            {properties.map(prop => (
               <Card key={prop.id} className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 border-l-4 border-transparent hover:border-l-primary group">
                 <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                   <div>
@@ -110,13 +112,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                        prop.risk_level === 'HIGH' ? 'bg-destructive/10 text-destructive' :
-                        prop.risk_level === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
-                        prop.risk_level === 'LOW' ? 'bg-blue-100 text-blue-700' :
-                        'bg-emerald-100 text-emerald-700'
-                      }`}>{prop.risk_status}</div>
-                      <div className="text-xs text-slate-500 mt-1">{prop.signals_count} signal(s)</div>
+                      <div className={`px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700`}>{prop.monitoring_status}</div>
+                      <div className="text-xs text-slate-500 mt-1">0 signal(s)</div>
                     </div>
                     <Link to={`/properties/${prop.id}`}>
                       <Button variant="outline" size="sm">View</Button>

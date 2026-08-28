@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { INDIAN_STATES, DISTRICTS } from '../mock/demoData';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { useProperties } from '../hooks/useProperties';
 
 export default function AddPropertyPage() {
   const navigate = useNavigate();
+  const { addProperty } = useProperties();
   const [form, setForm] = useState({
     state: '', district: '', taluk: '', village: '', survey_number: '',
     khasra_number: '', property_name: '', owner_name: '', area: '',
@@ -22,14 +24,33 @@ export default function AddPropertyPage() {
     if (field === 'state') setForm(prev => ({ ...prev, state: value, district: '', taluk: '', village: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      await addProperty({
+        state: form.state,
+        district: form.district,
+        taluk: form.taluk,
+        village: form.village,
+        survey_number: form.survey_number,
+        khasra_number: form.khasra_number || null,
+        property_name: form.property_name || null,
+        owner_name: form.owner_name || null,
+        area: form.area || null,
+        property_type: form.property_type || null,
+        latitude: null,
+        longitude: null,
+        monitoring_status: 'ACTIVE'
+      });
       setSuccess(true);
       setTimeout(() => navigate('/properties'), 1500);
-    }, 1000);
+    } catch (err) {
+      console.error("Failed to add property", err);
+      alert("Failed to add property. Ensure you are logged in.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
