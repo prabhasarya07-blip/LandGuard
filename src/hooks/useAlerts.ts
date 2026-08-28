@@ -42,11 +42,9 @@ export function useAlerts() {
 
       if (error) throw error;
       
-      if (!data || data.length === 0) {
-        setAlerts(DEMO_ALERTS as any[]);
-      } else {
-        setAlerts(data);
-      }
+      const userAlerts = data || [];
+      const combinedAlerts = [...userAlerts, ...DEMO_ALERTS];
+      setAlerts(combinedAlerts as any[]);
     } catch (err: any) {
       console.error(err);
     } finally {

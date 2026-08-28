@@ -40,12 +40,10 @@ export function useProperties() {
 
       if (error) throw error;
       
-      // INJECT DEMO DATA IF DB IS EMPTY FOR PRESENTATION
-      if (!data || data.length === 0) {
-        setProperties(DEMO_PROPERTIES as any[]);
-      } else {
-        setProperties(data);
-      }
+      // INJECT DEMO DATA FOR PRESENTATION - ALWAYS SHOW DEMO PROPS
+      const userProps = data || [];
+      const combinedProps = [...userProps, ...DEMO_PROPERTIES];
+      setProperties(combinedProps as any[]);
     } catch (err: any) {
       setError(err.message);
     } finally {

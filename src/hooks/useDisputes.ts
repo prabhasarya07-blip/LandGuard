@@ -29,11 +29,9 @@ export function useDisputes() {
 
       if (error) throw error;
       
-      if (!data || data.length === 0) {
-        setDisputes(DEMO_DISPUTES as any[]);
-      } else {
-        setDisputes(data);
-      }
+      const userDisputes = data || [];
+      const combinedDisputes = [...userDisputes, ...DEMO_DISPUTES];
+      setDisputes(combinedDisputes as any[]);
     } catch (err: any) {
       console.error(err);
     } finally {
